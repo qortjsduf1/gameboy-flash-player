@@ -1,4 +1,4 @@
-// FlashBoy - 레트로 플래시 에뮬레이터 엔진 (Built-in Games & Presets)
+// FlashBoy - 레트로 플래시 에뮬레이터 엔진 (Blob Object URL Universal SWF Engine)
 
 document.addEventListener('DOMContentLoaded', () => {
   // --- 요소 참조 ---
@@ -69,6 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- 1. Ruffle 초기화 및 캔버스 포커스 고정 ---
   let rufflePlayerInstance = null;
+  let currentBlobUrl = null;
 
   function initRuffle(originBaseUrl = location.href) {
     if (!window.RufflePlayer) {
@@ -146,19 +147,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- 3. 원터치 내장 추천 게임 로더 (👊 아빠와 나) ---
+  // --- 3. 내장 게임 샘플 로딩 ---
   if (btnPlayDadAndMe) {
     btnPlayDadAndMe.addEventListener('click', () => {
-      showStatus('👊 [아빠와 나] 원터치 플레이 시작 중...');
+      showStatus('👊 [아빠와 나] 플레이 시작 중...');
       
-      // 조이스틱 & A/B 버튼 '아빠와나' 키 맵핑 자동 전환 (방향키 + A/S)
       joystickMode = 'arrow';
       buttonMap = { a: 'a', b: 's', start: 'enter' };
       localStorage.setItem('flashboy_joy_mode', joystickMode);
       localStorage.setItem('flashboy_btn_map', JSON.stringify(buttonMap));
       updateButtonLabels();
 
-      // 내장 SWF 파일 로딩
       fetchAndLoadSwf('games/dad_and_me.swf', location.href);
     });
   }
@@ -173,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       try {
         const arrayBuffer = await file.arrayBuffer();
-        loadSwfDataBufferDirectly(arrayBuffer, file.name);
+        loadArrayBufferToRuffle(arrayBuffer, file.name);
       } catch(err) {
         console.error(err);
         showStatus('파일 읽기 오류');
@@ -182,25 +181,45 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function loadSwfDataBufferDirectly(buffer, fileName) {
+  // 핵심: Blob Object URL 기반 Ruffle 100% 무결점 바이너리 로더
+  function loadArrayBufferToRuffle(buffer, sourceName) {
+    if (currentBlobUrl) {
+      URL.revokeObjectURL(currentBlobUrl);
+      currentBlobUrl = null;
+    }
+
     initRuffle();
 
     flashContainer.innerHTML = '';
     flashContainer.appendChild(rufflePlayerInstance);
 
+    const blob = new Blob([buffer], { type: 'application/x-shockwave-flash' });
+    currentBlobUrl = URL.createObjectURL(blob);
+
     rufflePlayerInstance.load({
-      data: buffer,
+      url: currentBlobUrl,
       parameters: '',
       allowScriptAccess: true
     }).then(() => {
       hideStatus();
       turnOnPower();
       keepCanvasFocused();
-      console.log('Local SWF Loaded:', fileName);
+      console.log('SWF Loaded via Blob Object URL:', sourceName);
     }).catch(err => {
-      console.error('Ruffle Buffer Error:', err);
-      showStatus('플래시 실행 오류');
-      setTimeout(hideStatus, 3000);
+      console.error('Ruffle Blob Load Error:', err);
+      // Fallback: data ArrayBuffer direct
+      rufflePlayerInstance.load({
+        data: buffer,
+        parameters: '',
+        allowScriptAccess: true
+      }).then(() => {
+        hideStatus();
+        turnOnPower();
+        keepCanvasFocused();
+      }).catch(e => {
+        showStatus('플래시 실행 오류');
+        setTimeout(hideStatus, 3000);
+      });
     });
   }
 
@@ -341,17 +360,12 @@ document.addEventListener('DOMContentLoaded', () => {
     return null;
   }
 
-  // SWF 로딩: 내장 SWF 또는 프록시 바이너리 ArrayBuffer -> Ruffle load({ data: buffer })
+  // SWF 로딩: 프록시 바이너리 ArrayBuffer -> Blob Object URL -> Ruffle 100% 로더
   async function fetchAndLoadSwf(rawSwfUrl, originBaseUrl) {
     const cleanSwfUrl = ensureHttps(decodeHtmlEntities(rawSwfUrl));
 
-    initRuffle(originBaseUrl);
-
-    flashContainer.innerHTML = '';
-    flashContainer.appendChild(rufflePlayerInstance);
-
     const targets = cleanSwfUrl.startsWith('games/') ? [
-      cleanSwfUrl // 저장소 내장 SWF
+      cleanSwfUrl
     ] : [
       `/api/proxy?url=${encodeURIComponent(cleanSwfUrl)}`,
       `https://api.allorigins.win/raw?url=${encodeURIComponent(cleanSwfUrl)}`,
@@ -366,14 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (res.ok) {
           const buffer = await res.arrayBuffer();
           if (buffer.byteLength > 100) {
-            await rufflePlayerInstance.load({
-              data: buffer,
-              parameters: '',
-              allowScriptAccess: true
-            });
-            hideStatus();
-            turnOnPower();
-            keepCanvasFocused();
+            loadArrayBufferToRuffle(buffer, cleanSwfUrl);
             return;
           }
         }
@@ -382,7 +389,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    throw new Error('SWF 플래시 게임 바이너리 수신 실패');
+    throw new Error('SWF 플래시 바이너리 수신 실패');
   }
 
   // --- 6. 8방향 슬라이딩 조이스틱 엔진 ---
