@@ -1,0 +1,20 @@
+{
+  "name": "gameboy-flash-player",
+  "version": "1.0.0",
+  "description": "Game Boy style mobile Flash emulator platform using Ruffle",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "flash",
+    "emulator",
+    "gameboy",
+    "ruffle",
+    "webassembly",
+    "retro"
+  ],
+  "author": "",
+  "license": "MIT"
+}

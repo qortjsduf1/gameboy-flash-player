@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>FlashBoy - 레트로 플래시 에뮬레이터</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- 게임보이 하우징 메인 쉘 -->
+    <div class="gameboy-housing">
+      <!-- 헤더 브랜드 로고 & 상태 바 -->
+      <div class="gb-header">
+        <div class="gb-brand">
+          <span class="brand-text">FLASH</span><span class="brand-sub">BOY</span>
+          <span class="brand-model">MAX DISPLAY</span>
+        </div>
+        <div class="power-led-container">
+          <div class="power-led" id="powerLed"></div>
+          <span class="power-text">POWER</span>
+        </div>
+      </div>
+
+      <!-- URL 입력 바 -->
+      <div class="url-input-group">
+        <input type="text" id="urlInput" placeholder="티스토리 글 URL 또는 .swf 주소 입력..." autocomplete="off">
+        <button id="loadUrlBtn" class="gb-btn-small">실행</button>
+      </div>
+
+      <!-- 확대된 대형 게임 스크린 영역 (LCD) -->
+      <div class="screen-bezel">
+        <div class="bezel-header">
+          <span class="line-blue"></span>
+          <span class="line-red"></span>
+          <span class="bezel-title">WIDE DOT MATRIX WITH STEREO SOUND</span>
+        </div>
+        
+        <div class="screen-display" id="screenDisplay">
+          <!-- Ruffle 에뮬레이터 캔버스 마운트 지점 -->
+          <div id="flashContainer" class="flash-container">
+            <div class="screen-welcome">
+              <div class="gb-logo-anim">FLASH BOY</div>
+              <p class="welcome-desc">티스토리/웹 SWF 주소를 입력하면 게임 시작!</p>
+              <div class="quick-samples">
+                <span class="sample-tag">하단 SELECT 🔗 버튼을 눌러 새 탭에서 게임 찾기</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 로딩 / 에러 오버레이 -->
+          <div class="status-overlay hidden" id="statusOverlay">
+            <div class="spinner"></div>
+            <div class="status-text" id="statusText">플래시 게임 로딩 중...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 게임보이 하단 컨트롤 패드 (8방향 아날로그/십자 조이스틱 & Action Buttons) -->
+      <div class="gb-controls">
+        <!-- 8방향 터치 조이스틱 패드 -->
+        <div class="joystick-container">
+          <div class="joystick-base" id="joystickBase">
+            <div class="dpad-dir dir-up">▲</div>
+            <div class="dpad-dir dir-down">▼</div>
+            <div class="dpad-dir dir-left">◀</div>
+            <div class="dpad-dir dir-right">▶</div>
+            <div class="dpad-dir dir-upleft">↖</div>
+            <div class="dpad-dir dir-upright">↗</div>
+            <div class="dpad-dir dir-downleft">↙</div>
+            <div class="dpad-dir dir-downright">↘</div>
+            
+            <div class="joystick-stick" id="joystickStick">
+              <div class="stick-cap"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- A/B 액션 버튼 -->
+        <div class="action-buttons-container">
+          <div class="ab-group">
+            <div class="btn-wrapper">
+              <button class="round-btn btn-b" data-key="b" id="btnB">B</button>
+              <span class="btn-label" id="labelB">X</span>
+            </div>
+            <div class="btn-wrapper">
+              <button class="round-btn btn-a" data-key="a" id="btnA">A</button>
+              <span class="btn-label" id="labelA">Z</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Select (티스토리 새 탭 이동) / Start / ⚙️ 키설정 버튼 및 스피커 그릴 -->
+      <div class="gb-footer">
+        <div class="option-buttons-container">
+          <!-- 순수 HTML target="_blank" 앵커로 100% 팝업 차단 없이 새 탭 보장 -->
+          <div class="pill-btn-wrapper">
+            <a href="https://vidkidz.tistory.com/" target="_blank" rel="noopener noreferrer" class="pill-btn btn-tistory-link" id="btnSelectLink" title="티스토리 플래시 게임 탐색 (새 탭)"></a>
+            <span class="pill-label label-tistory">SELECT 🔗</span>
+          </div>
+          <div class="pill-btn-wrapper">
+            <button class="pill-btn" data-key="start" id="btnStart"></button>
+            <span class="pill-label">START</span>
+          </div>
+          <!-- 하단 키설정 버튼 -->
+          <div class="pill-btn-wrapper config-wrapper">
+            <button class="pill-btn btn-config" id="btnOpenSettings">⚙️</button>
+            <span class="pill-label label-highlight">키설정</span>
+          </div>
+        </div>
+
+        <!-- 스피커 릿지 -->
+        <div class="speaker-grill">
+          <span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 드롭다운 선택지 기반 🎮 키설정 모달 팝업 -->
+  <div class="modal-backdrop hidden" id="keyConfigModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>🎮 조작키 맵핑 설정</h3>
+        <button class="close-btn" id="closeModalBtn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="settings-section">
+          <p class="modal-desc">게임에 맞게 조이스틱 및 A/B 버튼 키를 선택하세요.</p>
+
+          <!-- 드롭다운 선택지 리스트 -->
+          <div class="key-grid">
+            <!-- 1. 조이스틱 대칭 전환 선택지 -->
+            <div class="key-row">
+              <label>🕹️ 조이스틱 (이동):</label>
+              <select id="joystickPresetSelect" class="key-select">
+                <option value="arrow">방향키 (▲▼◀▶)</option>
+                <option value="wasd">WASD 자판 (W/A/S/D)</option>
+              </select>
+            </div>
+
+            <!-- 2. A 버튼 키 선택지 -->
+            <div class="key-row">
+              <label>🔴 A 버튼:</label>
+              <select id="selectKeyA" class="key-select">
+                <option value="z">Z 키 (기본)</option>
+                <option value="a">A 키 (아빠와나 / 공격)</option>
+                <option value="x">X 키</option>
+                <option value="c">C 키</option>
+                <option value="space">Space (스페이스바 / 점프)</option>
+                <option value="s">S 키</option>
+                <option value="d">D 키</option>
+                <option value="k">K 키</option>
+                <option value="enter">Enter (엔터)</option>
+                <option value="shift">Shift (쉬프트)</option>
+                <option value="ctrl">Ctrl (컨트롤)</option>
+              </select>
+            </div>
+
+            <!-- 3. B 버튼 키 선택지 -->
+            <div class="key-row">
+              <label>🔵 B 버튼:</label>
+              <select id="selectKeyB" class="key-select">
+                <option value="x">X 키 (기본)</option>
+                <option value="s">S 키 (아빠와나 / 필살기)</option>
+                <option value="z">Z 키</option>
+                <option value="a">A 키</option>
+                <option value="c">C 키</option>
+                <option value="space">Space (스페이스바 / 점프)</option>
+                <option value="d">D 키</option>
+                <option value="j">J 키</option>
+                <option value="enter">Enter (엔터)</option>
+                <option value="shift">Shift (쉬프트)</option>
+                <option value="ctrl">Ctrl (컨트롤)</option>
+              </select>
+            </div>
+
+            <div class="key-row">
+              <label>🔘 START 버튼:</label>
+              <select id="selectKeyStart" class="key-select">
+                <option value="enter">Enter (기본 / 시작)</option>
+                <option value="space">Space (스페이스바)</option>
+                <option value="p">P 키 (일시정지)</option>
+                <option value="z">Z 키</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 인기 게임 빠른 프리셋 버튼 -->
+          <div class="preset-label-title">⚡ 대표 게임 원터치 추천 설정:</div>
+          <div class="preset-buttons">
+            <button id="presetDefaultBtn" class="gb-btn-small">🕹️ 기본 (방향키 + Z/X)</button>
+            <button id="presetDadBtn" class="gb-btn-small highlight-preset">👊 아빠와나 (방향키 + A/S)</button>
+            <button id="presetWasdBtn" class="gb-btn-small">⚔️ WASD (WASD + J/K)</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="saveKeyConfigBtn" class="gb-btn-primary">저장 및 적용</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
