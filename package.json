@@ -2,6 +2,7 @@
   "name": "gameboy-flash-player",
   "version": "1.0.0",
   "description": "Game Boy style mobile Flash emulator platform using Ruffle",
+  "type": "module",
   "keywords": [
     "flash",
     "emulator",
