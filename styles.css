@@ -1,0 +1,654 @@
+/* FlashBoy - 레트로 게임보이 플래시 에뮬레이터 메인 스타일시트 */
+
+:root {
+  --gb-shell-color: #8b8b9e;
+  --gb-shell-shadow: #636375;
+  --gb-shell-highlight: #a8a8b8;
+  --gb-screen-bezel: #53565e;
+  --gb-screen-lcd: #9bbc0f;
+  --gb-screen-lcd-dark: #0f380f;
+  --gb-btn-a: #c52958;
+  --gb-btn-b: #c52958;
+  --gb-btn-dark: #2a2a30;
+  --gb-text-yellow: #f8db26;
+  --gb-text-blue: #003666;
+  --font-pixel: 'Press Start 2P', monospace, sans-serif;
+  --font-retro: 'VT323', monospace, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+body {
+  background-color: #121316;
+  color: #fff;
+  font-family: var(--font-pixel);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  overflow-x: hidden;
+}
+
+.app-container {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  justify-content: center;
+}
+
+/* 게임보이 하우징 메인 쉘 */
+.gameboy-housing {
+  background: linear-gradient(145deg, var(--gb-shell-highlight), var(--gb-shell-color) 40%, var(--gb-shell-shadow));
+  border-radius: 20px 20px 60px 20px;
+  box-shadow: inset 2px 2px 4px rgba(255, 255, 255, 0.4),
+              inset -4px -6px 10px rgba(0, 0, 0, 0.4),
+              0 15px 35px rgba(0, 0, 0, 0.6);
+  padding: 18px 16px 24px 16px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+}
+
+/* 헤더 브랜드 로고 & 상태 바 */
+.gb-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 4px;
+}
+
+.gb-brand {
+  font-size: 13px;
+  letter-spacing: 1px;
+  color: var(--gb-text-blue);
+  font-weight: bold;
+}
+
+.brand-sub {
+  color: #c52958;
+  margin-left: 2px;
+}
+
+.brand-model {
+  display: block;
+  font-size: 7px;
+  color: #404040;
+  margin-top: 2px;
+  letter-spacing: 0.5px;
+}
+
+.power-led-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.power-led {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #4a1111;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+  transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.power-led.active {
+  background-color: #ff3333;
+  box-shadow: 0 0 8px #ff3333, inset 0 1px 2px #fff;
+}
+
+.power-text {
+  font-size: 6px;
+  color: #404040;
+}
+
+/* URL 입력 바 */
+.url-input-group {
+  display: flex;
+  gap: 6px;
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 4px;
+  border-radius: 6px;
+}
+
+.url-input-group input {
+  flex: 1;
+  background-color: #1e2025;
+  border: 1px solid #3d414d;
+  color: #00ff66;
+  font-family: var(--font-retro);
+  font-size: 16px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  outline: none;
+}
+
+.url-input-group input::placeholder {
+  color: #6c7385;
+  font-size: 14px;
+}
+
+.gb-btn-small {
+  background: linear-gradient(to bottom, #4a4e5a, #2a2d36);
+  border: 1px solid #1a1c22;
+  border-radius: 4px;
+  color: #fff;
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  padding: 0 10px;
+  cursor: pointer;
+  box-shadow: 0 2px 0 #111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gb-btn-small.file-btn {
+  background: linear-gradient(to bottom, #2b683a, #1a4224);
+  border-color: #0d2613;
+  color: #66ff88;
+}
+
+.gb-btn-small:active {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+
+/* 확대된 대형 LCD 스크린 베젤 */
+.screen-bezel {
+  background-color: var(--gb-screen-bezel);
+  border-radius: 10px 10px 40px 10px;
+  padding: 12px;
+  box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.6), 0 2px 4px rgba(255, 255, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+.bezel-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.line-blue {
+  height: 2px;
+  flex: 1;
+  background-color: #003666;
+}
+
+.line-red {
+  height: 2px;
+  width: 20px;
+  background-color: #c52958;
+}
+
+.bezel-title {
+  font-size: 6px;
+  color: #a0a5b5;
+  letter-spacing: 0.5px;
+}
+
+/* 확대된 LCD 뷰포트 */
+.screen-display {
+  background-color: #000;
+  border: 3px solid #1a1b20;
+  border-radius: 4px;
+  height: 60vh;
+  min-height: 290px;
+  max-height: 480px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.9);
+}
+
+.flash-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #050505;
+}
+
+.screen-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 16px;
+  text-align: center;
+}
+
+.gb-logo-anim {
+  font-size: 20px;
+  color: var(--gb-screen-lcd);
+  text-shadow: 0 0 10px var(--gb-screen-lcd);
+  margin-bottom: 12px;
+  animation: pulse 2s infinite alternate;
+}
+
+@keyframes pulse {
+  from { opacity: 0.7; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1.02); }
+}
+
+.welcome-desc {
+  font-size: 9px;
+  line-height: 1.6;
+  color: #8899aa;
+  margin-bottom: 16px;
+}
+
+.quick-samples {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.sample-tag {
+  font-size: 7px;
+  background-color: #1a241a;
+  color: #88ff88;
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid #2d452d;
+  line-height: 1.4;
+}
+
+/* 로딩 오버레이 */
+.status-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.85);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  z-index: 10;
+}
+
+.status-overlay.hidden {
+  display: none;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 4px solid #333;
+  border-top: 4px solid var(--gb-screen-lcd);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.status-text {
+  font-size: 9px;
+  color: var(--gb-screen-lcd);
+}
+
+/* 컨트롤 패드 영역 */
+.gb-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  margin-top: 4px;
+}
+
+/* 8방향 아날로그 슬라이드 조이스틱 패드 */
+.joystick-container {
+  width: 140px;
+  height: 140px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.joystick-base {
+  width: 130px;
+  height: 130px;
+  background: radial-gradient(circle, #1a1a20 0%, #2a2b32 70%, #151518 100%);
+  border-radius: 50%;
+  border: 4px solid #111215;
+  box-shadow: inset 0 4px 8px rgba(0,0,0,0.8), 0 4px 6px rgba(255,255,255,0.1);
+  position: relative;
+  touch-action: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.dpad-dir {
+  position: absolute;
+  font-size: 10px;
+  color: #555a68;
+  pointer-events: none;
+  transition: color 0.15s, text-shadow 0.15s;
+}
+
+.dir-up { top: 6px; }
+.dir-down { bottom: 6px; }
+.dir-left { left: 8px; }
+.dir-right { right: 8px; }
+.dir-upleft { top: 16px; left: 16px; font-size: 9px; }
+.dir-upright { top: 16px; right: 16px; font-size: 9px; }
+.dir-downleft { bottom: 16px; left: 16px; font-size: 9px; }
+.dir-downright { bottom: 16px; right: 16px; font-size: 9px; }
+
+.dpad-dir.active {
+  color: #00ff66;
+  text-shadow: 0 0 6px #00ff66;
+}
+
+.joystick-stick {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #4a4d58, #22242b);
+  border: 2px solid #111;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.6), inset 0 2px 3px rgba(255,255,255,0.3);
+  position: absolute;
+  pointer-events: none;
+  transition: transform 0.05s ease-out;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.stick-cap {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: repeating-radial-gradient(circle, #2a2c35, #2a2c35 2px, #1c1d22 3px, #1c1d22 4px);
+  border: 1px solid #111;
+}
+
+/* A/B 액션 버튼 */
+.action-buttons-container {
+  display: flex;
+  align-items: center;
+}
+
+.ab-group {
+  display: flex;
+  gap: 14px;
+  transform: rotate(-15deg);
+  background-color: rgba(0, 0, 0, 0.15);
+  padding: 10px 14px;
+  border-radius: 40px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.btn-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.round-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #db3668, #9e1b40);
+  border: none;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: var(--font-pixel);
+  font-size: 14px;
+  box-shadow: 0 5px 0 #610f25, 0 8px 10px rgba(0,0,0,0.4);
+  cursor: pointer;
+  outline: none;
+  touch-action: none;
+}
+
+.round-btn.pressed, .round-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 #610f25, 0 3px 5px rgba(0,0,0,0.4);
+}
+
+.btn-label {
+  font-size: 8px;
+  color: var(--gb-text-blue);
+  font-weight: bold;
+  transform: rotate(15deg);
+}
+
+/* 푸터 영역 (Select, Start, 키설정 버튼 및 스피커) */
+.gb-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 4px 10px 0 10px;
+}
+
+.option-buttons-container {
+  display: flex;
+  gap: 12px;
+}
+
+.pill-btn-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.pill-btn {
+  width: 42px;
+  height: 12px;
+  background-color: var(--gb-btn-dark);
+  border-radius: 6px;
+  border: none;
+  transform: rotate(-25deg);
+  box-shadow: 0 2px 0 #111;
+  cursor: pointer;
+  outline: none;
+  display: block;
+}
+
+.pill-btn.btn-tistory-link {
+  text-decoration: none;
+}
+
+.pill-btn:active, .pill-btn.pressed {
+  transform: rotate(-25deg) translateY(2px);
+  box-shadow: none;
+}
+
+.pill-btn.btn-config {
+  background-color: #2b452b;
+  color: #66ff88;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 8px;
+}
+
+.pill-label {
+  font-size: 7px;
+  color: var(--gb-text-blue);
+  font-weight: bold;
+}
+
+.pill-label.label-tistory {
+  color: #d9431e;
+}
+
+.pill-label.label-highlight {
+  color: #0f6629;
+}
+
+.speaker-grill {
+  display: flex;
+  gap: 4px;
+  transform: rotate(-25deg);
+  margin-bottom: 6px;
+}
+
+.speaker-grill span {
+  width: 4px;
+  height: 28px;
+  background-color: #222328;
+  border-radius: 2px;
+  box-shadow: inset 1px 1px 1px rgba(0,0,0,0.8);
+}
+
+/* 🎮 드롭다운 키설정 모달 팝업 */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+  padding: 16px;
+}
+
+.modal-backdrop.hidden {
+  display: none;
+}
+
+.modal-card {
+  background-color: #1e2026;
+  border: 2px solid #3b3e4a;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+  overflow: hidden;
+}
+
+.modal-header {
+  background-color: #272a33;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #3b3e4a;
+}
+
+.modal-header h3 {
+  font-size: 11px;
+  color: #66ff88;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: #8899aa;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.modal-body {
+  padding: 16px;
+}
+
+.modal-desc {
+  font-size: 8px;
+  color: #a0a8b8;
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+.key-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.key-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.key-row label {
+  font-size: 8px;
+  color: #d0d8e8;
+}
+
+.key-select {
+  background-color: #121317;
+  border: 1px solid #454958;
+  color: #ffdd44;
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  outline: none;
+  min-width: 170px;
+}
+
+.preset-label-title {
+  font-size: 8px;
+  color: #8899aa;
+  margin-bottom: 8px;
+}
+
+.preset-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.preset-buttons button {
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+}
+
+.preset-buttons button.highlight-preset {
+  background: linear-gradient(to bottom, #8a243a, #571221);
+  border-color: #ff4466;
+  color: #ffdddd;
+}
+
+.modal-footer {
+  background-color: #17181d;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid #2a2d38;
+}
+
+.gb-btn-primary {
+  background: linear-gradient(to bottom, #2b8042, #184a25);
+  border: 1px solid #103319;
+  border-radius: 6px;
+  color: #fff;
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+.gb-btn-primary:active {
+  transform: translateY(1px);
+}
