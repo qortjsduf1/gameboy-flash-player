@@ -6,7 +6,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const urlInput = document.getElementById('urlInput');
   const loadUrlBtn = document.getElementById('loadUrlBtn');
   const localFileInput = document.getElementById('localFileInput');
-  const btnPlayDadAndMe = document.getElementById('btnPlayDadAndMe');
   const statusOverlay = document.getElementById('statusOverlay');
   const statusText = document.getElementById('statusText');
   const powerLed = document.getElementById('powerLed');
@@ -147,22 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- 3. 내장 게임 샘플 로딩 ---
-  if (btnPlayDadAndMe) {
-    btnPlayDadAndMe.addEventListener('click', () => {
-      showStatus('👊 [아빠와 나] 플레이 시작 중...');
-      
-      joystickMode = 'arrow';
-      buttonMap = { a: 'a', b: 's', start: 'enter' };
-      localStorage.setItem('flashboy_joy_mode', joystickMode);
-      localStorage.setItem('flashboy_btn_map', JSON.stringify(buttonMap));
-      updateButtonLabels();
-
-      fetchAndLoadSwf('games/dad_and_me.swf', location.href);
-    });
-  }
-
-  // --- 4. 로컬 SWF 파일 직접 선택 ---
+  // --- 3. 로컬 SWF 파일 직접 선택 ---
   if (localFileInput) {
     localFileInput.addEventListener('change', async (e) => {
       const file = e.target.files && e.target.files[0];
@@ -181,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 핵심: Blob Object URL 기반 Ruffle 100% 무결점 바이너리 로더
+  // Blob Object URL 기반 Ruffle 100% 무결점 바이너리 로더
   function loadArrayBufferToRuffle(buffer, sourceName) {
     if (currentBlobUrl) {
       URL.revokeObjectURL(currentBlobUrl);
@@ -207,7 +191,6 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log('SWF Loaded via Blob Object URL:', sourceName);
     }).catch(err => {
       console.error('Ruffle Blob Load Error:', err);
-      // Fallback: data ArrayBuffer direct
       rufflePlayerInstance.load({
         data: buffer,
         parameters: '',
@@ -223,7 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- 5. URL 로드 및 JSONP 파서 ---
+  // --- 4. URL 로드 및 JSONP 파서 ---
 
   loadUrlBtn.addEventListener('click', () => {
     let inputUrl = urlInput.value.trim();
@@ -392,7 +375,7 @@ document.addEventListener('DOMContentLoaded', () => {
     throw new Error('SWF 플래시 바이너리 수신 실패');
   }
 
-  // --- 6. 8방향 슬라이딩 조이스틱 엔진 ---
+  // --- 5. 8방향 슬라이딩 조이스틱 엔진 ---
 
   let isJoystickActive = false;
   let activeDirectionKeys = new Set();
@@ -532,7 +515,7 @@ document.addEventListener('DOMContentLoaded', () => {
     activeDirectionKeys = targetSet;
   }
 
-  // --- 7. A/B/START 액션 버튼 ---
+  // --- 6. A/B/START 액션 버튼 ---
 
   const actionButtons = document.querySelectorAll('.round-btn, #btnStart');
 
@@ -601,7 +584,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // --- 8. 키설정 모달 제어 ---
+  // --- 7. 키설정 모달 제어 ---
 
   function updateButtonLabels() {
     const configA = KEY_CONFIGS[buttonMap.a];
