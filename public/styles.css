@@ -434,7 +434,7 @@ body {
   transform: rotate(15deg);
 }
 
-/* 푸터 영역 (Select, Start, 키설정 버튼 및 스피커) */
+/* 푸터 영역 (Select, 사용방법, 키설정 버튼 및 스피커) */
 .gb-footer {
   display: flex;
   justify-content: space-between;
@@ -476,6 +476,15 @@ body {
   box-shadow: none;
 }
 
+.pill-btn.btn-help {
+  background-color: #2b3a4a;
+  color: #66ccff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 8px;
+}
+
 .pill-btn.btn-config {
   background-color: #2b452b;
   color: #66ff88;
@@ -493,6 +502,10 @@ body {
 
 .pill-label.label-tistory {
   color: #d9431e;
+}
+
+.pill-label.label-help {
+  color: #1a5e9a;
 }
 
 .pill-label.label-highlight {
@@ -514,7 +527,7 @@ body {
   box-shadow: inset 1px 1px 1px rgba(0,0,0,0.8);
 }
 
-/* 🎮 드롭다운 키설정 모달 팝업 */
+/* 🎮 모달 팝업 공통 */
 .modal-backdrop {
   position: fixed;
   top: 0;
@@ -538,7 +551,7 @@ body {
   border: 2px solid #3b3e4a;
   border-radius: 12px;
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.8);
   overflow: hidden;
 }
@@ -567,6 +580,67 @@ body {
 
 .modal-body {
   padding: 16px;
+}
+
+/* 📖 사용방법 모달 특화 스타일 */
+.help-card .modal-header h3 {
+  color: #66ccff;
+}
+
+.help-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.help-step {
+  display: flex;
+  gap: 12px;
+  background-color: #14161b;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #2d313c;
+}
+
+.step-badge {
+  background: linear-gradient(135deg, #0066cc, #004488);
+  color: #fff;
+  font-size: 7px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  height: fit-content;
+  white-space: nowrap;
+}
+
+.step-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.step-content h4 {
+  font-size: 9px;
+  color: #88ddff;
+}
+
+.step-content p {
+  font-size: 8px;
+  color: #b0b8c8;
+  line-height: 1.5;
+  font-family: sans-serif;
+  letter-spacing: -0.2px;
+}
+
+.help-tip-box {
+  background-color: #1d261d;
+  border: 1px solid #335533;
+  border-radius: 6px;
+  padding: 6px 8px;
+  margin-top: 6px;
+  font-size: 7px;
+  color: #88ff99;
+  line-height: 1.4;
+  font-family: sans-serif;
 }
 
 .modal-desc {

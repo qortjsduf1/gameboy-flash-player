@@ -97,7 +97,7 @@
         </div>
       </div>
 
-      <!-- Select (티스토리 새 탭 이동) / Start / ⚙️ 키설정 버튼 및 스피커 그릴 -->
+      <!-- Select (티스토리 새 탭 이동) / 사용방법 (설명서) / ⚙️ 키설정 버튼 및 스피커 그릴 -->
       <div class="gb-footer">
         <div class="option-buttons-container">
           <!-- 순수 HTML target="_blank" 앵커로 100% 팝업 차단 없이 새 탭 보장 -->
@@ -105,13 +105,14 @@
             <a href="https://vidkidz.tistory.com/" target="_blank" rel="noopener noreferrer" class="pill-btn btn-tistory-link" id="btnSelectLink" title="티스토리 플래시 게임 탐색 (새 탭)"></a>
             <span class="pill-label label-tistory">SELECT 🔗</span>
           </div>
+          <!-- START 버튼 -> 사용방법(설명서) 버튼으로 변경 -->
           <div class="pill-btn-wrapper">
-            <button class="pill-btn" data-key="start" id="btnStart"></button>
-            <span class="pill-label">START</span>
+            <button class="pill-btn btn-help" id="btnOpenHelp" title="사용방법 안내 설명서 보기">📖</button>
+            <span class="pill-label label-help">사용방법</span>
           </div>
           <!-- 하단 키설정 버튼 -->
           <div class="pill-btn-wrapper config-wrapper">
-            <button class="pill-btn btn-config" id="btnOpenSettings">⚙️</button>
+            <button class="pill-btn btn-config" id="btnOpenSettings" title="조작키 맵핑 설정">⚙️</button>
             <span class="pill-label label-highlight">키설정</span>
           </div>
         </div>
@@ -120,6 +121,47 @@
         <div class="speaker-grill">
           <span></span><span></span><span></span><span></span><span></span><span></span>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 📖 사용방법 간단 설명서 모달 팝업 -->
+  <div class="modal-backdrop hidden" id="helpModal">
+    <div class="modal-card help-card">
+      <div class="modal-header">
+        <h3>📖 FlashBoy 사용방법 설명서</h3>
+        <button class="close-btn" id="closeHelpModalBtn">&times;</button>
+      </div>
+      <div class="modal-body help-body">
+        <div class="help-step">
+          <div class="step-badge">1단계</div>
+          <div class="step-content">
+            <h4>🔗 게임 URL 가져오기</h4>
+            <p>하단 <strong>[SELECT 🔗]</strong> 버튼을 누르면 새 탭에서 비드키즈 블로그가 열립니다. 원하시는 게임 글의 주소(URL)를 복사하세요.</p>
+          </div>
+        </div>
+
+        <div class="help-step">
+          <div class="step-badge">2단계</div>
+          <div class="step-content">
+            <h4>🚀 주소 입력 후 실행하기</h4>
+            <p>복사한 주소를 상단 주소창에 붙여넣고 <strong>[실행]</strong> 버튼을 누른 뒤, <strong>약 10초 정도 기다리시면</strong> 게임이 자동 로딩됩니다!</p>
+          </div>
+        </div>
+
+        <div class="help-step">
+          <div class="step-badge">3단계</div>
+          <div class="step-content">
+            <h4>🎮 조작키 원하는 키로 설정하기</h4>
+            <p>하단 <strong>[⚙️ 키설정]</strong> 버튼을 누르면 8방향 조이스틱(방향키 ↔ WASD)과 B, A 버튼에 원하는 특정 자판 키를 자유롭게 맵핑할 수 있습니다.</p>
+            <div class="help-tip-box">
+              💡 <strong>추천 설정:</strong> '아빠와 나' 게임은 <strong>[방향키 + A/S 키]</strong> 프리셋 버튼을 누르면 1초 만에 최적화됩니다.
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="closeHelpModalFooterBtn" class="gb-btn-primary">확인했습니다</button>
       </div>
     </div>
   </div>

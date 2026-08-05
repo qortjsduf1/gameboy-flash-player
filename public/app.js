@@ -15,11 +15,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const joystickStick = document.getElementById('joystickStick');
   const btnOpenSettings = document.getElementById('btnOpenSettings');
   const btnSelectLink = document.getElementById('btnSelectLink');
+  const btnOpenHelp = document.getElementById('btnOpenHelp');
   
-  // 키 설정 모달 & 드롭다운 요소
+  // 모달 요소 (키설정 & 사용방법 모달)
   const keyConfigModal = document.getElementById('keyConfigModal');
   const closeModalBtn = document.getElementById('closeModalBtn');
   const saveKeyConfigBtn = document.getElementById('saveKeyConfigBtn');
+
+  const helpModal = document.getElementById('helpModal');
+  const closeHelpModalBtn = document.getElementById('closeHelpModalBtn');
+  const closeHelpModalFooterBtn = document.getElementById('closeHelpModalFooterBtn');
 
   const joystickPresetSelect = document.getElementById('joystickPresetSelect');
   const selectKeyA = document.getElementById('selectKeyA');
@@ -347,9 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchAndLoadSwf(rawSwfUrl, originBaseUrl) {
     const cleanSwfUrl = ensureHttps(decodeHtmlEntities(rawSwfUrl));
 
-    const targets = cleanSwfUrl.startsWith('games/') ? [
-      cleanSwfUrl
-    ] : [
+    const targets = [
       `/api/proxy?url=${encodeURIComponent(cleanSwfUrl)}`,
       `https://api.allorigins.win/raw?url=${encodeURIComponent(cleanSwfUrl)}`,
       `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(cleanSwfUrl)}`,
@@ -515,9 +518,9 @@ document.addEventListener('DOMContentLoaded', () => {
     activeDirectionKeys = targetSet;
   }
 
-  // --- 6. A/B/START 액션 버튼 ---
+  // --- 6. A/B 액션 버튼 ---
 
-  const actionButtons = document.querySelectorAll('.round-btn, #btnStart');
+  const actionButtons = document.querySelectorAll('.round-btn');
 
   actionButtons.forEach(btn => {
     const btnId = btn.getAttribute('data-key');
@@ -584,7 +587,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // --- 7. 키설정 모달 제어 ---
+  // --- 7. 모달 제어 (사용방법 & 키설정) ---
 
   function updateButtonLabels() {
     const configA = KEY_CONFIGS[buttonMap.a];
@@ -601,8 +604,27 @@ document.addEventListener('DOMContentLoaded', () => {
     selectKeyStart.value = buttonMap.start;
   }
 
+  // 📖 사용방법 모달 연동
+  if (btnOpenHelp) {
+    btnOpenHelp.addEventListener('click', (e) => {
+      e.preventDefault();
+      triggerHaptic();
+      helpModal.classList.remove('hidden');
+    });
+  }
+
+  const closeHelpModal = () => {
+    helpModal.classList.add('hidden');
+    keepCanvasFocused();
+  };
+
+  if (closeHelpModalBtn) closeHelpModalBtn.addEventListener('click', closeHelpModal);
+  if (closeHelpModalFooterBtn) closeHelpModalFooterBtn.addEventListener('click', closeHelpModal);
+
+  // ⚙️ 키설정 모달 연동
   btnOpenSettings.addEventListener('click', (e) => {
     e.preventDefault();
+    triggerHaptic();
     syncSelectsWithCurrentState();
     keyConfigModal.classList.remove('hidden');
   });
