@@ -1,4 +1,4 @@
-// FlashBoy - 레트로 플래시 에뮬레이터 엔진 (Ruffle CORS & Multi-Proxy Failover Engine)
+// FlashBoy - 레트로 플래시 에뮬레이터 엔진 (Dedicated Binary Proxy Relay for GitHub Pages)
 
 document.addEventListener('DOMContentLoaded', () => {
   // --- 요소 참조 ---
@@ -78,7 +78,6 @@ document.addEventListener('DOMContentLoaded', () => {
     rufflePlayerInstance.style.width = '100%';
     rufflePlayerInstance.style.height = '100%';
     
-    // Ruffle 에뮬레이터 Cross-Origin 풀림 설정
     rufflePlayerInstance.config = {
       autoplay: 'on',
       unmuteOverlay: 'hidden',
@@ -216,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const swfUrl = extractSwfFromHtml(htmlContent, targetUrl);
 
       if (swfUrl) {
-        showStatus('플래시 게임 구동 중...');
+        showStatus('플래시 바이너리 다운로드 중...');
         console.log('Extracted SWF URL:', swfUrl);
         await fetchAndLoadSwf(swfUrl, targetUrl);
       } else {
@@ -282,7 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return null;
   }
 
-  // SWF 로딩: Ruffle Direct URL Stream (with Origin Base) -> ArrayBuffer Proxy Fallback Chain
+  // SWF 로딩: 프록시 바이너리 ArrayBuffer -> Ruffle load({ data: buffer })
   async function fetchAndLoadSwf(rawSwfUrl, originBaseUrl) {
     const cleanSwfUrl = ensureHttps(decodeHtmlEntities(rawSwfUrl));
 
@@ -291,29 +290,10 @@ document.addEventListener('DOMContentLoaded', () => {
     flashContainer.innerHTML = '';
     flashContainer.appendChild(rufflePlayerInstance);
 
-    // 1. Ruffle Direct Load (Base URL 탑재)
-    try {
-      console.log('Attempting Ruffle Direct Load with base:', cleanSwfUrl);
-      await rufflePlayerInstance.load({
-        url: cleanSwfUrl,
-        parameters: '',
-        allowScriptAccess: true
-      });
-      hideStatus();
-      turnOnPower();
-      keepCanvasFocused();
-      return;
-    } catch (e) {
-      console.warn('Ruffle Direct Load failed, trying proxy fallbacks...', e);
-    }
-
-    // 2. Fallback ArrayBuffer Proxy 10중 체인
     const targets = [
       `/api/proxy?url=${encodeURIComponent(cleanSwfUrl)}`,
       `https://api.allorigins.win/raw?url=${encodeURIComponent(cleanSwfUrl)}`,
       `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(cleanSwfUrl)}`,
-      `https://thingproxy.freeboard.io/fetch/${cleanSwfUrl}`,
-      `https://cors-proxy.htmldriven.com/?url=${encodeURIComponent(cleanSwfUrl)}`,
       `https://corsproxy.io/?${encodeURIComponent(cleanSwfUrl)}`
     ];
 
@@ -340,7 +320,23 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    throw new Error('SWF 플래시 게임 구동 중 오류가 발생했습니다.');
+    // 최후의 보루: Ruffle Direct Load
+    try {
+      console.log('Attempting Ruffle Direct Load:', cleanSwfUrl);
+      await rufflePlayerInstance.load({
+        url: cleanSwfUrl,
+        parameters: '',
+        allowScriptAccess: true
+      });
+      hideStatus();
+      turnOnPower();
+      keepCanvasFocused();
+      return;
+    } catch (e) {
+      console.error('Final Ruffle Direct Load failed:', e);
+    }
+
+    throw new Error('SWF 플래시 게임 바이너리 수신 실패');
   }
 
   // --- 4. 8방향 슬라이딩 조이스틱 엔진 ---
