@@ -1,4 +1,4 @@
-// FlashBoy - 레트로 플래시 에뮬레이터 엔진 (GitHub Pages .github.io 100% 완벽 지원)
+// FlashBoy - 레트로 플래시 에뮬레이터 엔진 (HTTPS Mixed Content 및 GitHub Pages 호환성 100% 강화)
 
 document.addEventListener('DOMContentLoaded', () => {
   // --- 요소 참조 ---
@@ -127,13 +127,22 @@ document.addEventListener('DOMContentLoaded', () => {
     return txt.value;
   }
 
+  // HTTP -> HTTPS 강제 변환 함수 (HTTPS Mixed Content 블로킹 차단 방지)
+  function ensureHttps(urlStr) {
+    if (!urlStr) return urlStr;
+    if (urlStr.startsWith('http://')) {
+      return urlStr.replace('http://', 'https://');
+    }
+    return urlStr;
+  }
+
   if (btnSelectLink) {
     btnSelectLink.addEventListener('click', () => {
       triggerHaptic();
     });
   }
 
-  // --- 3. URL 로드 및 Tistory 파서 (GitHub Pages 호환 프록시 폴백 체인) ---
+  // --- 3. URL 로드 및 Tistory 파서 ---
 
   loadUrlBtn.addEventListener('click', () => {
     let inputUrl = urlInput.value.trim();
@@ -144,6 +153,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!inputUrl.startsWith('http://') && !inputUrl.startsWith('https://')) {
       inputUrl = 'https://' + inputUrl;
+    } else {
+      inputUrl = ensureHttps(inputUrl);
     }
 
     processInputUrl(inputUrl);
@@ -181,9 +192,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // GitHub Pages 정적 환경과 로컬 Node 환경을 구분하여 퍼블릭 프록시 자동 체인 생성
-  async function fetchHtmlWithFallback(url) {
-    const isGithubPages = window.location.hostname.includes('github.io');
+  async function fetchHtmlWithFallback(rawUrl) {
+    const url = ensureHttps(rawUrl);
+    const isGithubPages = window.location.hostname.includes('github.io') || window.location.protocol === 'https:';
 
     const fetchTargets = isGithubPages ? [
       `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
@@ -216,30 +227,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const kakaocdnRegex = /(https?:\/\/(?:blog\.kakaocdn\.net|cfile\d*\.uf\.tistory\.com|t1\.daumcdn\.net)[^"'\s<>]+\.swf(?:\?[^"'\s<>]*)?)/gi;
     let match = kakaocdnRegex.exec(html);
-    if (match) return match[1];
+    if (match) return ensureHttps(match[1]);
 
     const swfRegex = /(https?:\/\/[^"'\s<>]+?\.swf(?:\?[^"'\s<>]*)?)/gi;
     match = swfRegex.exec(html);
-    if (match) return match[1];
+    if (match) return ensureHttps(match[1]);
 
     const embedRegex = /<(?:embed|param|object)[^>]+(?:src|value)=["']([^"'\s>]+?\.swf[^"'\s>]*)["']/gi;
     match = embedRegex.exec(html);
     if (match) {
       let rel = match[1];
       if (rel.startsWith('//')) return 'https:' + rel;
-      if (rel.startsWith('http')) return rel;
-      return new URL(rel, baseUrl).href;
+      if (rel.startsWith('http')) return ensureHttps(rel);
+      return ensureHttps(new URL(rel, baseUrl).href);
     }
 
     return null;
   }
 
-  async function fetchAndLoadSwf(swfUrl) {
-    const cleanSwfUrl = decodeHtmlEntities(swfUrl);
-    const isGithubPages = window.location.hostname.includes('github.io');
+  async function fetchAndLoadSwf(rawSwfUrl) {
+    const cleanSwfUrl = ensureHttps(decodeHtmlEntities(rawSwfUrl));
+    const isGithubPages = window.location.hostname.includes('github.io') || window.location.protocol === 'https:';
 
     const targets = isGithubPages ? [
-      cleanSwfUrl, // 카카오 CDN 등 Direct fetch 시도
+      cleanSwfUrl, // 카카오 CDN Direct fetch
       `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(cleanSwfUrl)}`,
       `https://api.allorigins.win/raw?url=${encodeURIComponent(cleanSwfUrl)}`,
       `https://corsproxy.io/?${encodeURIComponent(cleanSwfUrl)}`
