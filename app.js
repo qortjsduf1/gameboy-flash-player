@@ -1,4 +1,4 @@
-// FlashBoy - 레트로 플래시 에뮬레이터 엔진 (HTTPS Mixed Content 및 GitHub Pages 호환성 100% 강화)
+// FlashBoy - 레트로 플래시 에뮬레이터 엔진 (Enhanced Binary Proxy Pipeline)
 
 document.addEventListener('DOMContentLoaded', () => {
   // --- 요소 참조 ---
@@ -127,7 +127,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return txt.value;
   }
 
-  // HTTP -> HTTPS 강제 변환 함수 (HTTPS Mixed Content 블로킹 차단 방지)
   function ensureHttps(urlStr) {
     if (!urlStr) return urlStr;
     if (urlStr.startsWith('http://')) {
@@ -194,22 +193,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchHtmlWithFallback(rawUrl) {
     const url = ensureHttps(rawUrl);
-    const isGithubPages = window.location.hostname.includes('github.io') || window.location.protocol === 'https:';
 
-    const fetchTargets = isGithubPages ? [
-      `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-      `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-      `https://corsproxy.io/?${encodeURIComponent(url)}`
-    ] : [
+    const fetchTargets = [
       `/api/proxy?url=${encodeURIComponent(url)}`,
-      url,
+      `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
       `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-      `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
+      `https://thingproxy.freeboard.io/fetch/${url}`,
+      `https://corsproxy.io/?${encodeURIComponent(url)}`
     ];
 
     for (const target of fetchTargets) {
       try {
-        console.log('Fetching HTML via target:', target);
+        console.log('Fetching HTML target:', target);
         const response = await fetch(target);
         if (response.ok) {
           const html = await response.text();
@@ -219,7 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('HTML fetch attempt failed:', target, e);
       }
     }
-    throw new Error('블로그 페이지를 불러올 수 없습니다. 링크를 확인해주세요.');
+    throw new Error('블로그 페이지를 불러올 수 없습니다.');
   }
 
   function extractSwfFromHtml(rawHtml, baseUrl) {
@@ -247,28 +242,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchAndLoadSwf(rawSwfUrl) {
     const cleanSwfUrl = ensureHttps(decodeHtmlEntities(rawSwfUrl));
-    const isGithubPages = window.location.hostname.includes('github.io') || window.location.protocol === 'https:';
 
-    const targets = isGithubPages ? [
-      cleanSwfUrl, // 카카오 CDN Direct fetch
-      `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(cleanSwfUrl)}`,
+    const targets = [
+      `/api/proxy?url=${encodeURIComponent(cleanSwfUrl)}`, // Vercel / Node 내장 서버리스 프록시 1순위
+      cleanSwfUrl,                                          // Direct Fetch (카카오 CDN)
       `https://api.allorigins.win/raw?url=${encodeURIComponent(cleanSwfUrl)}`,
-      `https://corsproxy.io/?${encodeURIComponent(cleanSwfUrl)}`
-    ] : [
-      `/api/proxy?url=${encodeURIComponent(cleanSwfUrl)}`,
-      cleanSwfUrl,
       `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(cleanSwfUrl)}`,
-      `https://api.allorigins.win/raw?url=${encodeURIComponent(cleanSwfUrl)}`
+      `https://thingproxy.freeboard.io/fetch/${cleanSwfUrl}`,
+      `https://corsproxy.io/?${encodeURIComponent(cleanSwfUrl)}`
     ];
 
     for (const target of targets) {
       try {
-        console.log('Fetching SWF binary via target:', target);
+        console.log('Fetching SWF binary target:', target);
         const res = await fetch(target);
         if (res.ok) {
           const buffer = await res.arrayBuffer();
-          loadSwfDataBuffer(buffer, cleanSwfUrl);
-          return;
+          if (buffer.byteLength > 100) {
+            loadSwfDataBuffer(buffer, cleanSwfUrl);
+            return;
+          }
         }
       } catch (e) {
         console.warn('SWF Fetch failed for:', target, e);
