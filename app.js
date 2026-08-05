@@ -1,4 +1,4 @@
-// FlashBoy - 레트로 플래시 에뮬레이터 엔진 (HTML Native target=_blank New Tab Binding)
+// FlashBoy - 레트로 플래시 에뮬레이터 엔진 (GitHub Pages .github.io 100% 완벽 지원)
 
 document.addEventListener('DOMContentLoaded', () => {
   // --- 요소 참조 ---
@@ -127,14 +127,13 @@ document.addEventListener('DOMContentLoaded', () => {
     return txt.value;
   }
 
-  // --- 3. SELECT 버튼 터치 시 햅틱 피드백 ---
   if (btnSelectLink) {
     btnSelectLink.addEventListener('click', () => {
       triggerHaptic();
     });
   }
 
-  // --- 4. URL 로드 및 Tistory 파서 ---
+  // --- 3. URL 로드 및 Tistory 파서 (GitHub Pages 호환 프록시 폴백 체인) ---
 
   loadUrlBtn.addEventListener('click', () => {
     let inputUrl = urlInput.value.trim();
@@ -182,8 +181,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // GitHub Pages 정적 환경과 로컬 Node 환경을 구분하여 퍼블릭 프록시 자동 체인 생성
   async function fetchHtmlWithFallback(url) {
-    const fetchTargets = [
+    const isGithubPages = window.location.hostname.includes('github.io');
+
+    const fetchTargets = isGithubPages ? [
+      `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+      `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+      `https://corsproxy.io/?${encodeURIComponent(url)}`
+    ] : [
       `/api/proxy?url=${encodeURIComponent(url)}`,
       url,
       `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
@@ -192,14 +198,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     for (const target of fetchTargets) {
       try {
+        console.log('Fetching HTML via target:', target);
         const response = await fetch(target);
         if (response.ok) {
           const html = await response.text();
           if (html && html.length > 300) return html;
         }
-      } catch (e) {}
+      } catch (e) {
+        console.warn('HTML fetch attempt failed:', target, e);
+      }
     }
-    throw new Error('블로그 페이지를 불러올 수 없습니다.');
+    throw new Error('블로그 페이지를 불러올 수 없습니다. 링크를 확인해주세요.');
   }
 
   function extractSwfFromHtml(rawHtml, baseUrl) {
@@ -227,8 +236,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchAndLoadSwf(swfUrl) {
     const cleanSwfUrl = decodeHtmlEntities(swfUrl);
+    const isGithubPages = window.location.hostname.includes('github.io');
 
-    const targets = [
+    const targets = isGithubPages ? [
+      cleanSwfUrl, // 카카오 CDN 등 Direct fetch 시도
+      `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(cleanSwfUrl)}`,
+      `https://api.allorigins.win/raw?url=${encodeURIComponent(cleanSwfUrl)}`,
+      `https://corsproxy.io/?${encodeURIComponent(cleanSwfUrl)}`
+    ] : [
       `/api/proxy?url=${encodeURIComponent(cleanSwfUrl)}`,
       cleanSwfUrl,
       `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(cleanSwfUrl)}`,
@@ -237,13 +252,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     for (const target of targets) {
       try {
+        console.log('Fetching SWF binary via target:', target);
         const res = await fetch(target);
         if (res.ok) {
           const buffer = await res.arrayBuffer();
           loadSwfDataBuffer(buffer, cleanSwfUrl);
           return;
         }
-      } catch (e) {}
+      } catch (e) {
+        console.warn('SWF Fetch failed for:', target, e);
+      }
     }
 
     throw new Error('SWF 플래시 바이너리 다운로드 실패');
@@ -273,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- 5. 8방향 슬라이딩 조이스틱 엔진 ---
+  // --- 4. 8방향 슬라이딩 조이스틱 엔진 ---
 
   let isJoystickActive = false;
   let activeDirectionKeys = new Set();
@@ -413,7 +431,7 @@ document.addEventListener('DOMContentLoaded', () => {
     activeDirectionKeys = targetSet;
   }
 
-  // --- 6. A/B/START 액션 버튼 ---
+  // --- 5. A/B/START 액션 버튼 ---
 
   const actionButtons = document.querySelectorAll('.round-btn, #btnStart');
 
@@ -482,7 +500,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // --- 7. 키설정 모달 제어 ---
+  // --- 6. 키설정 모달 제어 ---
 
   function updateButtonLabels() {
     const configA = KEY_CONFIGS[buttonMap.a];
