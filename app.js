@@ -1,4 +1,4 @@
-// FlashBoy - 레트로 플래시 에뮬레이터 엔진 (Local SWF File & Dual Load Engine)
+// FlashBoy - 레트로 플래시 에뮬레이터 엔진 (Built-in Games & Presets)
 
 document.addEventListener('DOMContentLoaded', () => {
   // --- 요소 참조 ---
@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const urlInput = document.getElementById('urlInput');
   const loadUrlBtn = document.getElementById('loadUrlBtn');
   const localFileInput = document.getElementById('localFileInput');
+  const btnPlayDadAndMe = document.getElementById('btnPlayDadAndMe');
   const statusOverlay = document.getElementById('statusOverlay');
   const statusText = document.getElementById('statusText');
   const powerLed = document.getElementById('powerLed');
@@ -69,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- 1. Ruffle 초기화 및 캔버스 포커스 고정 ---
   let rufflePlayerInstance = null;
 
-  function initRuffle(originBaseUrl = 'https://vidkidz.tistory.com/') {
+  function initRuffle(originBaseUrl = location.href) {
     if (!window.RufflePlayer) {
       console.warn('RufflePlayer 라이브러리가 로드되지 않았습니다.');
       return;
@@ -145,7 +146,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- 3. 로컬 파일 직접 선택 (.swf) ---
+  // --- 3. 원터치 내장 추천 게임 로더 (👊 아빠와 나) ---
+  if (btnPlayDadAndMe) {
+    btnPlayDadAndMe.addEventListener('click', () => {
+      showStatus('👊 [아빠와 나] 원터치 플레이 시작 중...');
+      
+      // 조이스틱 & A/B 버튼 '아빠와나' 키 맵핑 자동 전환 (방향키 + A/S)
+      joystickMode = 'arrow';
+      buttonMap = { a: 'a', b: 's', start: 'enter' };
+      localStorage.setItem('flashboy_joy_mode', joystickMode);
+      localStorage.setItem('flashboy_btn_map', JSON.stringify(buttonMap));
+      updateButtonLabels();
+
+      // 내장 SWF 파일 로딩
+      fetchAndLoadSwf('games/dad_and_me.swf', location.href);
+    });
+  }
+
+  // --- 4. 로컬 SWF 파일 직접 선택 ---
   if (localFileInput) {
     localFileInput.addEventListener('change', async (e) => {
       const file = e.target.files && e.target.files[0];
@@ -186,7 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- 4. URL 로드 및 JSONP 파서 ---
+  // --- 5. URL 로드 및 JSONP 파서 ---
 
   loadUrlBtn.addEventListener('click', () => {
     let inputUrl = urlInput.value.trim();
@@ -323,7 +341,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return null;
   }
 
-  // SWF 로딩: 프록시 바이너리 ArrayBuffer -> Ruffle load({ data: buffer })
+  // SWF 로딩: 내장 SWF 또는 프록시 바이너리 ArrayBuffer -> Ruffle load({ data: buffer })
   async function fetchAndLoadSwf(rawSwfUrl, originBaseUrl) {
     const cleanSwfUrl = ensureHttps(decodeHtmlEntities(rawSwfUrl));
 
@@ -332,7 +350,9 @@ document.addEventListener('DOMContentLoaded', () => {
     flashContainer.innerHTML = '';
     flashContainer.appendChild(rufflePlayerInstance);
 
-    const targets = [
+    const targets = cleanSwfUrl.startsWith('games/') ? [
+      cleanSwfUrl // 저장소 내장 SWF
+    ] : [
       `/api/proxy?url=${encodeURIComponent(cleanSwfUrl)}`,
       `https://api.allorigins.win/raw?url=${encodeURIComponent(cleanSwfUrl)}`,
       `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(cleanSwfUrl)}`,
@@ -341,7 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     for (const target of targets) {
       try {
-        console.log('Fetching SWF binary via proxy:', target);
+        console.log('Fetching SWF binary:', target);
         const res = await fetch(target);
         if (res.ok) {
           const buffer = await res.arrayBuffer();
@@ -365,7 +385,7 @@ document.addEventListener('DOMContentLoaded', () => {
     throw new Error('SWF 플래시 게임 바이너리 수신 실패');
   }
 
-  // --- 5. 8방향 슬라이딩 조이스틱 엔진 ---
+  // --- 6. 8방향 슬라이딩 조이스틱 엔진 ---
 
   let isJoystickActive = false;
   let activeDirectionKeys = new Set();
@@ -505,7 +525,7 @@ document.addEventListener('DOMContentLoaded', () => {
     activeDirectionKeys = targetSet;
   }
 
-  // --- 6. A/B/START 액션 버튼 ---
+  // --- 7. A/B/START 액션 버튼 ---
 
   const actionButtons = document.querySelectorAll('.round-btn, #btnStart');
 
@@ -574,7 +594,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // --- 7. 키설정 모달 제어 ---
+  // --- 8. 키설정 모달 제어 ---
 
   function updateButtonLabels() {
     const configA = KEY_CONFIGS[buttonMap.a];

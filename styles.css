@@ -199,7 +199,7 @@ body {
   letter-spacing: 0.5px;
 }
 
-/* 확대된 LCD 뷰포트 (높이 대폭 확장) */
+/* 확대된 LCD 뷰포트 */
 .screen-display {
   background-color: #000;
   border: 3px solid #1a1b20;
@@ -227,7 +227,7 @@ body {
   align-items: center;
   justify-content: center;
   height: 100%;
-  padding: 20px;
+  padding: 16px;
   text-align: center;
 }
 
@@ -235,7 +235,7 @@ body {
   font-size: 20px;
   color: var(--gb-screen-lcd);
   text-shadow: 0 0 10px var(--gb-screen-lcd);
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   animation: pulse 2s infinite alternate;
 }
 
@@ -245,10 +245,43 @@ body {
 }
 
 .welcome-desc {
-  font-size: 9px;
-  line-height: 1.6;
+  font-size: 8px;
+  line-height: 1.5;
   color: #8899aa;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
+}
+
+/* 원터치 내장 게임 버튼 */
+.builtin-game-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 260px;
+  margin-bottom: 14px;
+}
+
+.builtin-game-btn {
+  background: linear-gradient(to bottom, #d6335c, #911636);
+  border: 2px solid #ff6688;
+  border-radius: 6px;
+  color: #fff;
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  padding: 10px 12px;
+  cursor: pointer;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.5);
+  animation: pulseGlow 1.5s infinite alternate;
+}
+
+@keyframes pulseGlow {
+  from { box-shadow: 0 0 4px #ff3366; }
+  to { box-shadow: 0 0 12px #ff6699; }
+}
+
+.builtin-game-btn:active {
+  transform: translateY(2px);
+  box-shadow: none;
 }
 
 .quick-samples {
