@@ -1,4 +1,4 @@
-// FlashBoy - 레트로 플래시 에뮬레이터 엔진 (Enhanced Binary Proxy Pipeline)
+// FlashBoy - 레트로 플래시 에뮬레이터 엔진 (Ruffle Direct URL Streaming Mode)
 
 document.addEventListener('DOMContentLoaded', () => {
   // --- 요소 참조 ---
@@ -179,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const swfUrl = extractSwfFromHtml(htmlContent, targetUrl);
 
       if (swfUrl) {
-        showStatus('플래시 바이너리 다운로드 중...');
+        showStatus('플래시 게임 구동 중...');
         await fetchAndLoadSwf(swfUrl);
       } else {
         throw new Error('페이지 내에서 .swf 플래시 주소를 찾지 못했습니다.');
@@ -240,12 +240,36 @@ document.addEventListener('DOMContentLoaded', () => {
     return null;
   }
 
+  // SWF 로딩: 1순위 Ruffle Direct URL Stream -> 2순위 Proxy ArrayBuffer
   async function fetchAndLoadSwf(rawSwfUrl) {
     const cleanSwfUrl = ensureHttps(decodeHtmlEntities(rawSwfUrl));
 
+    if (!rufflePlayerInstance) {
+      initRuffle();
+    }
+
+    flashContainer.innerHTML = '';
+    flashContainer.appendChild(rufflePlayerInstance);
+
+    // 1. Ruffle에 Direct URL 스트리밍 시도 (CORS 프록시 실패와 관계없이 렌더링!)
+    try {
+      console.log('Attempting Ruffle Direct Load:', cleanSwfUrl);
+      await rufflePlayerInstance.load({
+        url: cleanSwfUrl,
+        parameters: '',
+        allowScriptAccess: true
+      });
+      hideStatus();
+      turnOnPower();
+      keepCanvasFocused();
+      return;
+    } catch (e) {
+      console.warn('Ruffle Direct Load failed, trying proxy fallbacks...', e);
+    }
+
+    // 2. Ruffle Direct 실패 시 CORS 프록시 순회
     const targets = [
-      `/api/proxy?url=${encodeURIComponent(cleanSwfUrl)}`, // Vercel / Node 내장 서버리스 프록시 1순위
-      cleanSwfUrl,                                          // Direct Fetch (카카오 CDN)
+      `/api/proxy?url=${encodeURIComponent(cleanSwfUrl)}`,
       `https://api.allorigins.win/raw?url=${encodeURIComponent(cleanSwfUrl)}`,
       `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(cleanSwfUrl)}`,
       `https://thingproxy.freeboard.io/fetch/${cleanSwfUrl}`,
@@ -254,45 +278,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     for (const target of targets) {
       try {
-        console.log('Fetching SWF binary target:', target);
+        console.log('Fetching SWF binary via proxy:', target);
         const res = await fetch(target);
         if (res.ok) {
           const buffer = await res.arrayBuffer();
           if (buffer.byteLength > 100) {
-            loadSwfDataBuffer(buffer, cleanSwfUrl);
+            await rufflePlayerInstance.load({
+              data: buffer,
+              parameters: '',
+              allowScriptAccess: true
+            });
+            hideStatus();
+            turnOnPower();
+            keepCanvasFocused();
             return;
           }
         }
       } catch (e) {
-        console.warn('SWF Fetch failed for:', target, e);
+        console.warn('SWF Proxy Fetch failed for:', target, e);
       }
     }
 
-    throw new Error('SWF 플래시 바이너리 다운로드 실패');
-  }
-
-  function loadSwfDataBuffer(arrayBuffer, title) {
-    if (!rufflePlayerInstance) {
-      initRuffle();
-    }
-
-    flashContainer.innerHTML = '';
-    flashContainer.appendChild(rufflePlayerInstance);
-
-    rufflePlayerInstance.load({
-      data: arrayBuffer,
-      parameters: '',
-      allowScriptAccess: true
-    }).then(() => {
-      hideStatus();
-      turnOnPower();
-      keepCanvasFocused();
-      console.log('Flash Game Loaded Successfully:', title);
-    }).catch((err) => {
-      console.error('Ruffle Load Error:', err);
-      showStatus('플래시 실행 오류');
-      setTimeout(hideStatus, 3000);
-    });
+    throw new Error('SWF 플래시 게임을 구동할 수 없습니다.');
   }
 
   // --- 4. 8방향 슬라이딩 조이스틱 엔진 ---
