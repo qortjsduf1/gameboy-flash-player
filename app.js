@@ -1,4 +1,4 @@
-// FlashBoy - 레트로 플래시 에뮬레이터 엔진 (Ruffle Direct URL Streaming Mode)
+// FlashBoy - 레트로 플래시 에뮬레이터 엔진 (Vercel Serverless & Detailed Errors)
 
 document.addEventListener('DOMContentLoaded', () => {
   // --- 요소 참조 ---
@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   async function processInputUrl(targetUrl) {
-    showStatus('주소 분석 및 플래시 게임 탐색 중...');
+    showStatus('주소 분석 중...');
 
     if (targetUrl.toLowerCase().includes('.swf')) {
       await fetchAndLoadSwf(targetUrl);
@@ -174,12 +174,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      showStatus('블로그 페이지 파싱 중...');
+      showStatus('블로그 페이지 탐색 중...');
       const htmlContent = await fetchHtmlWithFallback(targetUrl);
       const swfUrl = extractSwfFromHtml(htmlContent, targetUrl);
 
       if (swfUrl) {
-        showStatus('플래시 게임 구동 중...');
+        showStatus('플래시 실행 준비 중...');
         await fetchAndLoadSwf(swfUrl);
       } else {
         throw new Error('페이지 내에서 .swf 플래시 주소를 찾지 못했습니다.');
@@ -187,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error(err);
       showStatus(`오류: ${err.message}`);
-      setTimeout(hideStatus, 3500);
+      setTimeout(hideStatus, 4000);
     }
   }
 
@@ -198,13 +198,13 @@ document.addEventListener('DOMContentLoaded', () => {
       `/api/proxy?url=${encodeURIComponent(url)}`,
       `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
       `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-      `https://thingproxy.freeboard.io/fetch/${url}`,
+      `https://cors-anywhere.herokuapp.com/${url}`,
       `https://corsproxy.io/?${encodeURIComponent(url)}`
     ];
 
     for (const target of fetchTargets) {
       try {
-        console.log('Fetching HTML target:', target);
+        console.log('Fetching HTML via target:', target);
         const response = await fetch(target);
         if (response.ok) {
           const html = await response.text();
@@ -214,7 +214,17 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('HTML fetch attempt failed:', target, e);
       }
     }
-    throw new Error('블로그 페이지를 불러올 수 없습니다.');
+
+    // allorigins JSONP fallback
+    try {
+      const jsonpRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
+      if (jsonpRes.ok) {
+        const json = await jsonpRes.json();
+        if (json && json.contents) return json.contents;
+      }
+    } catch(e) {}
+
+    throw new Error('블로그 페이지 파싱 실패 (외부 프록시 연결 원활하지 않음)');
   }
 
   function extractSwfFromHtml(rawHtml, baseUrl) {
@@ -240,7 +250,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return null;
   }
 
-  // SWF 로딩: 1순위 Ruffle Direct URL Stream -> 2순위 Proxy ArrayBuffer
   async function fetchAndLoadSwf(rawSwfUrl) {
     const cleanSwfUrl = ensureHttps(decodeHtmlEntities(rawSwfUrl));
 
@@ -251,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
     flashContainer.innerHTML = '';
     flashContainer.appendChild(rufflePlayerInstance);
 
-    // 1. Ruffle에 Direct URL 스트리밍 시도 (CORS 프록시 실패와 관계없이 렌더링!)
+    // 1. Ruffle Direct Load
     try {
       console.log('Attempting Ruffle Direct Load:', cleanSwfUrl);
       await rufflePlayerInstance.load({
@@ -267,12 +276,11 @@ document.addEventListener('DOMContentLoaded', () => {
       console.warn('Ruffle Direct Load failed, trying proxy fallbacks...', e);
     }
 
-    // 2. Ruffle Direct 실패 시 CORS 프록시 순회
+    // 2. Fallback ArrayBuffer Proxy
     const targets = [
       `/api/proxy?url=${encodeURIComponent(cleanSwfUrl)}`,
       `https://api.allorigins.win/raw?url=${encodeURIComponent(cleanSwfUrl)}`,
       `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(cleanSwfUrl)}`,
-      `https://thingproxy.freeboard.io/fetch/${cleanSwfUrl}`,
       `https://corsproxy.io/?${encodeURIComponent(cleanSwfUrl)}`
     ];
 
@@ -299,7 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    throw new Error('SWF 플래시 게임을 구동할 수 없습니다.');
+    throw new Error('플래시 바이너리 수신 중 오류가 발생했습니다.');
   }
 
   // --- 4. 8방향 슬라이딩 조이스틱 엔진 ---
