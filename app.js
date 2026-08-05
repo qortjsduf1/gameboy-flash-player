@@ -1,10 +1,11 @@
-// FlashBoy - 레트로 플래시 에뮬레이터 엔진 (Dedicated Binary Proxy Relay for GitHub Pages)
+// FlashBoy - 레트로 플래시 에뮬레이터 엔진 (Local SWF File & Dual Load Engine)
 
 document.addEventListener('DOMContentLoaded', () => {
   // --- 요소 참조 ---
   const flashContainer = document.getElementById('flashContainer');
   const urlInput = document.getElementById('urlInput');
   const loadUrlBtn = document.getElementById('loadUrlBtn');
+  const localFileInput = document.getElementById('localFileInput');
   const statusOverlay = document.getElementById('statusOverlay');
   const statusText = document.getElementById('statusText');
   const powerLed = document.getElementById('powerLed');
@@ -144,7 +145,48 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- 3. URL 로드 및 JSONP 우회 파서 ---
+  // --- 3. 로컬 파일 직접 선택 (.swf) ---
+  if (localFileInput) {
+    localFileInput.addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      showStatus(`로컬 파일 '${file.name}' 구동 중...`);
+
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        loadSwfDataBufferDirectly(arrayBuffer, file.name);
+      } catch(err) {
+        console.error(err);
+        showStatus('파일 읽기 오류');
+        setTimeout(hideStatus, 3000);
+      }
+    });
+  }
+
+  function loadSwfDataBufferDirectly(buffer, fileName) {
+    initRuffle();
+
+    flashContainer.innerHTML = '';
+    flashContainer.appendChild(rufflePlayerInstance);
+
+    rufflePlayerInstance.load({
+      data: buffer,
+      parameters: '',
+      allowScriptAccess: true
+    }).then(() => {
+      hideStatus();
+      turnOnPower();
+      keepCanvasFocused();
+      console.log('Local SWF Loaded:', fileName);
+    }).catch(err => {
+      console.error('Ruffle Buffer Error:', err);
+      showStatus('플래시 실행 오류');
+      setTimeout(hideStatus, 3000);
+    });
+  }
+
+  // --- 4. URL 로드 및 JSONP 파서 ---
 
   loadUrlBtn.addEventListener('click', () => {
     let inputUrl = urlInput.value.trim();
@@ -320,26 +362,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // 최후의 보루: Ruffle Direct Load
-    try {
-      console.log('Attempting Ruffle Direct Load:', cleanSwfUrl);
-      await rufflePlayerInstance.load({
-        url: cleanSwfUrl,
-        parameters: '',
-        allowScriptAccess: true
-      });
-      hideStatus();
-      turnOnPower();
-      keepCanvasFocused();
-      return;
-    } catch (e) {
-      console.error('Final Ruffle Direct Load failed:', e);
-    }
-
     throw new Error('SWF 플래시 게임 바이너리 수신 실패');
   }
 
-  // --- 4. 8방향 슬라이딩 조이스틱 엔진 ---
+  // --- 5. 8방향 슬라이딩 조이스틱 엔진 ---
 
   let isJoystickActive = false;
   let activeDirectionKeys = new Set();
@@ -479,7 +505,7 @@ document.addEventListener('DOMContentLoaded', () => {
     activeDirectionKeys = targetSet;
   }
 
-  // --- 5. A/B/START 액션 버튼 ---
+  // --- 6. A/B/START 액션 버튼 ---
 
   const actionButtons = document.querySelectorAll('.round-btn, #btnStart');
 
@@ -548,7 +574,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // --- 6. 키설정 모달 제어 ---
+  // --- 7. 키설정 모달 제어 ---
 
   function updateButtonLabels() {
     const configA = KEY_CONFIGS[buttonMap.a];

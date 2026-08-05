@@ -26,10 +26,12 @@
         </div>
       </div>
 
-      <!-- URL 입력 바 -->
+      <!-- URL 입력 바 및 로컬 SWF 파일 선택 -->
       <div class="url-input-group">
         <input type="text" id="urlInput" placeholder="티스토리 글 URL 또는 .swf 주소 입력..." autocomplete="off">
         <button id="loadUrlBtn" class="gb-btn-small">실행</button>
+        <label for="localFileInput" class="gb-btn-small file-btn" title="내 스마트폰/PC의 .swf 파일 직접 불러오기">📁 SWF</label>
+        <input type="file" id="localFileInput" accept=".swf" style="display:none;">
       </div>
 
       <!-- 확대된 대형 게임 스크린 영역 (LCD) -->
@@ -45,7 +47,7 @@
           <div id="flashContainer" class="flash-container">
             <div class="screen-welcome">
               <div class="gb-logo-anim">FLASH BOY</div>
-              <p class="welcome-desc">티스토리/웹 SWF 주소를 입력하면 게임 시작!</p>
+              <p class="welcome-desc">티스토리 주소 또는 📁 SWF 버튼으로 내 파일 플레이!</p>
               <div class="quick-samples">
                 <span class="sample-tag">하단 SELECT 🔗 버튼을 눌러 새 탭에서 게임 찾기</span>
               </div>
