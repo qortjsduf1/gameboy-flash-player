@@ -1,4 +1,4 @@
-// FlashBoy - 레트로 플래시 에뮬레이터 엔진 (JSONP CORS Bypass for GitHub Pages 100% Support)
+// FlashBoy - 레트로 플래시 에뮬레이터 엔진 (Ruffle CORS & Multi-Proxy Failover Engine)
 
 document.addEventListener('DOMContentLoaded', () => {
   // --- 요소 참조 ---
@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- 1. Ruffle 초기화 및 캔버스 포커스 고정 ---
   let rufflePlayerInstance = null;
 
-  function initRuffle() {
+  function initRuffle(originBaseUrl = 'https://vidkidz.tistory.com/') {
     if (!window.RufflePlayer) {
       console.warn('RufflePlayer 라이브러리가 로드되지 않았습니다.');
       return;
@@ -78,12 +78,16 @@ document.addEventListener('DOMContentLoaded', () => {
     rufflePlayerInstance.style.width = '100%';
     rufflePlayerInstance.style.height = '100%';
     
+    // Ruffle 에뮬레이터 Cross-Origin 풀림 설정
     rufflePlayerInstance.config = {
       autoplay: 'on',
       unmuteOverlay: 'hidden',
       letterbox: 'on',
       warnOnUnsupportedContent: false,
-      logLevel: 'error'
+      logLevel: 'error',
+      allowScriptAccess: true,
+      cors: 'unrestricted',
+      base: originBaseUrl
     };
   }
 
@@ -141,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- 3. URL 로드 및 JSONP 우회 파서 (GitHub Pages 필수 지원) ---
+  // --- 3. URL 로드 및 JSONP 우회 파서 ---
 
   loadUrlBtn.addEventListener('click', () => {
     let inputUrl = urlInput.value.trim();
@@ -165,7 +169,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // JSONP 기법: CORS 제약 100% 우회하여 브라우저에서 HTML 원본 받아오기
   function fetchViaJsonp(targetUrl) {
     return new Promise((resolve, reject) => {
       const callbackName = 'jsonp_cb_' + Math.round(1000000 * Math.random());
@@ -203,19 +206,19 @@ document.addEventListener('DOMContentLoaded', () => {
     showStatus('주소 분석 중...');
 
     if (targetUrl.toLowerCase().includes('.swf')) {
-      await fetchAndLoadSwf(targetUrl);
+      await fetchAndLoadSwf(targetUrl, targetUrl);
       return;
     }
 
     try {
-      showStatus('블로그 페이지 파싱 중...');
+      showStatus('블로그 페이지 탐색 중...');
       const htmlContent = await fetchHtmlWithFallback(targetUrl);
       const swfUrl = extractSwfFromHtml(htmlContent, targetUrl);
 
       if (swfUrl) {
         showStatus('플래시 게임 구동 중...');
         console.log('Extracted SWF URL:', swfUrl);
-        await fetchAndLoadSwf(swfUrl);
+        await fetchAndLoadSwf(swfUrl, targetUrl);
       } else {
         throw new Error('페이지 내에서 .swf 플래시 주소를 찾지 못했습니다.');
       }
@@ -229,18 +232,13 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchHtmlWithFallback(rawUrl) {
     const url = ensureHttps(rawUrl);
 
-    // 1순위: JSONP 방식 (CORS 보안 100% 무력화 브라우저 스크립트 주입)
     try {
-      console.log('Attempting JSONP Fetch for:', url);
       const html = await fetchViaJsonp(url);
-      if (html && html.length > 300) {
-        return html;
-      }
+      if (html && html.length > 300) return html;
     } catch(e) {
       console.warn('JSONP fetch failed, trying proxy fallbacks...', e);
     }
 
-    // 2순위: CORS Proxies
     const fetchTargets = [
       `/api/proxy?url=${encodeURIComponent(url)}`,
       `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
@@ -250,15 +248,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     for (const target of fetchTargets) {
       try {
-        console.log('Fetching HTML target:', target);
         const response = await fetch(target);
         if (response.ok) {
           const html = await response.text();
           if (html && html.length > 300) return html;
         }
-      } catch (e) {
-        console.warn('HTML fetch attempt failed:', target, e);
-      }
+      } catch (e) {}
     }
 
     throw new Error('블로그 페이지를 불러올 수 없습니다.');
@@ -287,20 +282,18 @@ document.addEventListener('DOMContentLoaded', () => {
     return null;
   }
 
-  // SWF 로딩: 1순위 Ruffle Direct URL Stream -> 2순위 Proxy ArrayBuffer
-  async function fetchAndLoadSwf(rawSwfUrl) {
+  // SWF 로딩: Ruffle Direct URL Stream (with Origin Base) -> ArrayBuffer Proxy Fallback Chain
+  async function fetchAndLoadSwf(rawSwfUrl, originBaseUrl) {
     const cleanSwfUrl = ensureHttps(decodeHtmlEntities(rawSwfUrl));
 
-    if (!rufflePlayerInstance) {
-      initRuffle();
-    }
+    initRuffle(originBaseUrl);
 
     flashContainer.innerHTML = '';
     flashContainer.appendChild(rufflePlayerInstance);
 
-    // 1. Ruffle Direct Load
+    // 1. Ruffle Direct Load (Base URL 탑재)
     try {
-      console.log('Attempting Ruffle Direct Load:', cleanSwfUrl);
+      console.log('Attempting Ruffle Direct Load with base:', cleanSwfUrl);
       await rufflePlayerInstance.load({
         url: cleanSwfUrl,
         parameters: '',
@@ -314,11 +307,13 @@ document.addEventListener('DOMContentLoaded', () => {
       console.warn('Ruffle Direct Load failed, trying proxy fallbacks...', e);
     }
 
-    // 2. Fallback ArrayBuffer Proxy
+    // 2. Fallback ArrayBuffer Proxy 10중 체인
     const targets = [
       `/api/proxy?url=${encodeURIComponent(cleanSwfUrl)}`,
       `https://api.allorigins.win/raw?url=${encodeURIComponent(cleanSwfUrl)}`,
       `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(cleanSwfUrl)}`,
+      `https://thingproxy.freeboard.io/fetch/${cleanSwfUrl}`,
+      `https://cors-proxy.htmldriven.com/?url=${encodeURIComponent(cleanSwfUrl)}`,
       `https://corsproxy.io/?${encodeURIComponent(cleanSwfUrl)}`
     ];
 
@@ -345,7 +340,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    throw new Error('SWF 플래시 게임을 구동할 수 없습니다.');
+    throw new Error('SWF 플래시 게임 구동 중 오류가 발생했습니다.');
   }
 
   // --- 4. 8방향 슬라이딩 조이스틱 엔진 ---
